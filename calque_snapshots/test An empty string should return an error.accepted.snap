@@ -1,0 +1,11 @@
+---
+version: 1.3.1
+title: test An empty string should return an error
+---
+I sent an emtpy string to Babel.identifier()
+
+The status of the response should be an error :
+  :error
+
+And the message should contain :is_emtpy :
+  :is_empty

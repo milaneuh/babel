@@ -1,0 +1,11 @@
+---
+version: 1.3.1
+title: test A string containing an incorrect grapheme should return an error
+---
+I sent an invalid string "a_string_should_not_end_with_an_upperscore_letteR" to Babel.identifier()
+
+The status of the response should be an error :
+  :error
+
+And the message should contain a tuple with the :contains_invalid_grapheme error :
+  {:contains_invalid_grapheme, 48, "R"}

@@ -1,0 +1,3 @@
+%{
+  "calque": {:hex, :calque, "1.3.1", "c614344609d32ea965f26aa1bac90921bcebeb0da8cdf244a2bff0260b8be235", [:mix], [], "hexpm", "d458630d6298408e2b986931ba49d13b2cc624b3fb2184bcef94314026d79075"},
+}
