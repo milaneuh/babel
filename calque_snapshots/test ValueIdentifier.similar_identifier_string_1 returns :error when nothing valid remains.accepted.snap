@@ -1,0 +1,15 @@
+---
+version: 1.3.1
+title: test ValueIdentifier.similar_identifier_string/1 returns :error when nothing valid remains
+---
+GIVEN an input string containing no valid identifier characters:
+
+  "__123!!"
+
+WHEN extracting a similar identifier:
+
+  result = Babel.ValueIdentifier.similar_identifier_string(input)
+
+THEN it should return :error:
+
+  :error

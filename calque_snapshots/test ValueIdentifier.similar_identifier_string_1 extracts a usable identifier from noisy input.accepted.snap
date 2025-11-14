@@ -1,0 +1,15 @@
+---
+version: 1.3.1
+title: test ValueIdentifier.similar_identifier_string/1 extracts a usable identifier from noisy input
+---
+GIVEN a noisy input string:
+
+  "  __123foo_bar!!  "
+
+WHEN extracting a similar identifier:
+
+  result = Babel.ValueIdentifier.similar_identifier_string(input)
+
+THEN it should return the cleaned identifier:
+
+  {:ok, "foo_bar"}

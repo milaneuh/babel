@@ -1,0 +1,40 @@
+---
+version: 1.3.1
+title: test add_types builds a TypedQuery from an UntypedQuery with Babel types
+---
+GIVEN this untyped query:
+
+  %Babel.Query.UntypedQuery{
+  file: "queries/babel.sql",
+  starting_line: 42,
+  name: %Babel.ValueIdentifier{name: "my_query"},
+  comment: ["-- this is a comment", "-- it spans multiple lines"],
+  content: "sql query body"
+}
+
+AND the following Babel types for params:
+
+  [1, 3.14, true, "foo", [1, 2], nil]
+
+AND the following Babel fields for returns:
+
+  [%Babel.Field{label: "id", type: 1}, %Babel.Field{label: "name", type: "foo"}]
+
+WHEN calling:
+
+  typed = Babel.Query.add_types(untyped, params, returns)
+
+THEN the resulting TypedQuery should be:
+
+  %Babel.Query.TypedQuery{
+  file: "queries/babel.sql",
+  starting_line: 42,
+  name: %Babel.ValueIdentifier{name: "my_query"},
+  comment: ["-- this is a comment", "-- it spans multiple lines"],
+  content: "sql query body",
+  params: [1, 3.14, true, "foo", [1, 2], nil],
+  returns: [
+    %Babel.Field{label: "id", type: 1},
+    %Babel.Field{label: "name", type: "foo"}
+  ]
+}

@@ -1,0 +1,15 @@
+---
+version: 1.3.1
+title: test ValueIdentifier.new/1 rejects an identifier starting with an invalid grapheme
+---
+GIVEN an invalid identifier starting with an uppercase letter:
+
+  input = "A_string_should_not_start_with_an_uppercase"
+
+WHEN calling:
+
+  result = Babel.ValueIdentifier.new(input)
+
+THEN it should return the error tuple:
+
+  {:error, {:contains_invalid_grapheme, 0, "A"}}

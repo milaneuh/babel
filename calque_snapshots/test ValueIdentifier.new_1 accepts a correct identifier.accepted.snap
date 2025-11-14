@@ -1,0 +1,15 @@
+---
+version: 1.3.1
+title: test ValueIdentifier.new/1 accepts a correct identifier
+---
+GIVEN a valid identifier:
+
+  input = "valid_identifier_string"
+
+WHEN calling:
+
+  result = Babel.ValueIdentifier.new(input)
+
+THEN it should return an :ok tuple containing a ValueIdentifier struct:
+
+  {:ok, %Babel.ValueIdentifier{name: "valid_identifier_string"}}
