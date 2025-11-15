@@ -132,28 +132,4 @@ defmodule Babel.QueryTest do
     """
     |> Calque.check()
   end
-
-  defmodule FindUserRow do
-    @enforce_keys [:id, :name, :status]
-    defstruct [:id, :name, :status]
-
-    @type t :: %__MODULE__{
-            id: integer(),
-            name: String.t(),
-            status: String.t()
-          }
-  end
-
-  @doc """
-  Runs the find_user query defined in queries/with_params.sql.
-
-   Find a user by id and status
-  """
-  @spec find_user(arg_1 :: integer(), arg_2 :: String.t()) :: FindUserRow.t()
-  def find_user(arg_1, arg_2) do
-    query = "SELECT * FROM users WHERE id = $1 AND status = $2"
-    params = [arg_1, arg_2]
-
-    # execution TBD
-  end
 end
