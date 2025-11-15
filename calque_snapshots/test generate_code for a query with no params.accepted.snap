@@ -1,0 +1,49 @@
+---
+version: 1.3.1
+title: test generate_code for a query with no params
+---
+GIVEN a TypedQuery with no parameters:
+
+  %Babel.Query.TypedQuery{
+  file: "queries/no_params.sql",
+  starting_line: 1,
+  name: %Babel.ValueIdentifier{name: "get_all_users"},
+  comment: [],
+  content: "SELECT * FROM users",
+  params: [],
+  returns: [
+    %Babel.Field{label: "id", type: :int},
+    %Babel.Field{label: "name", type: :string}
+  ]
+}
+
+WHEN generating Elixir code with:
+
+  code = Babel.Query.generate_code(query)
+
+THEN the generated Elixir code should be:
+
+defmodule GetAllUsersRow do
+  @enforce_keys [:id, :name]
+  defstruct [:id, :name]
+
+  @type t :: %__MODULE__{
+    id: integer(),
+    name: String.t()
+  }
+end
+
+
+@doc """
+Runs the get_all_users query defined in queries/no_params.sql.
+
+
+"""
+@spec get_all_users() :: GetAllUsersRow.t()
+def get_all_users() do
+  query = "SELECT * FROM users"
+  params = []
+
+  # execution TBD
+end
+

@@ -1,33 +1,40 @@
 defmodule Babel.Type do
-  @moduledoc """
-  Type aliases for the Babel domain.
-
-  These are pure typespec helpers.
-  No runtime representation, no custom AST.
-  """
-
-  @type t_int :: integer()
-  @type t_float :: float()
-  @type t_bool :: boolean()
-  @type t_string :: String.t()
-
-  @type t_list(inner) :: [inner]
-  @type t_option(inner) :: inner | nil
+  @type primitive ::
+          :int
+          | :float
+          | :bool
+          | :string
 
   @type t ::
-          t_int()
-          | t_float()
-          | t_bool()
-          | t_string()
-          | t_list(t())
-          | t_option(t())
+          primitive()
+          | {:array, t()}
+          | {:option, t()}
+
+  def int, do: :int
+  def float, do: :float
+  def bool, do: :bool
+  def string, do: :string
+
+  def array(inner), do: {:array, inner}
+  def option(inner), do: {:option, inner}
+
+  @spec to_typespec(__MODULE__.t()) :: String.t()
+  def to_typespec(:int), do: "integer()"
+  def to_typespec(:float), do: "float()"
+  def to_typespec(:bool), do: "boolean()"
+  def to_typespec(:string), do: "String.t()"
+
+  def to_typespec({:array, inner}),
+    do: "[#{to_typespec(inner)}]"
+
+  def to_typespec({:option, inner}),
+    do: "#{to_typespec(inner)} | nil"
+
+  def to_typespec({:custom, name}),
+    do: "term() # pg: #{inspect(name)}"
 end
 
 defmodule Babel.Field do
-  @moduledoc """
-  A labelled record field.
-  """
-
   @type value_identifier :: String.t()
 
   defstruct [:label, :type]
