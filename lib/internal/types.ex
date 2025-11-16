@@ -29,9 +29,6 @@ defmodule Babel.Type do
 
   def to_typespec({:option, inner}),
     do: "#{to_typespec(inner)} | nil"
-
-  def to_typespec({:custom, name}),
-    do: "term() # pg: #{inspect(name)}"
 end
 
 defmodule Babel.Field do

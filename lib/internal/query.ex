@@ -27,7 +27,6 @@ defmodule Babel.Query.TypedQuery do
 end
 
 defmodule Babel.Query do
-  alias Babel.Query.FindUserRow
   alias Babel.ValueIdentifier
   alias Babel.Query.{TypedQuery, UntypedQuery}
   alias Babel.Field
