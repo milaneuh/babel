@@ -1,0 +1,66 @@
+---
+version: 1.3.1
+title: test generate_code for a query with complex guard types
+---
+GIVEN a TypedQuery with complex parameter types (arrays, options, nested option of array):
+
+  %Babel.Query.TypedQuery{
+  file: "queries/complex_params.sql",
+  starting_line: 5,
+  name: %Babel.ValueIdentifier{name: "complex_query"},
+  comment: ["-- A query using complex guard types"],
+  content: "SELECT * FROM events WHERE ids = $1 AND label = $2 AND flags = $3",
+  params: [array: :int, option: :string, option: {:array, :bool}],
+  returns: [
+    %Babel.Field{label: "id", type: :int},
+    %Babel.Field{label: "label", type: :string},
+    %Babel.Field{label: "flag", type: :bool}
+  ]
+}
+
+WHEN generating Elixir code with:
+
+  code = Babel.Query.generate_code(query)
+
+THEN the generated Elixir code should include a guarded function clause
+and a fallback clause raising an ArgumentError, with guards derived from Babel.Type.to_guard/2:
+
+defmodule ComplexQueryRow do
+  @enforce_keys [:id, :label, :flag]
+  defstruct [:id, :label, :flag]
+
+  @type t :: %__MODULE__{
+    id: integer(),
+    label: String.t(),
+    flag: boolean()
+  }
+end
+
+@doc """
+Runs the complex_query query defined in queries/complex_params.sql.
+
+ A query using complex guard types
+"""
+@spec complex_query(arg_1 :: [integer()], arg_2 :: String.t() | nil, arg_3 :: [boolean()] | nil) :: ComplexQueryRow.t()
+def complex_query(arg_1, arg_2, arg_3) when is_list(arg_1) and (is_binary(arg_2) or is_nil(arg_2)) and (is_list(arg_3) or is_nil(arg_3)) do
+  query = "SELECT * FROM events WHERE ids = $1 AND label = $2 AND flags = $3"
+  params = [arg_1, arg_2, arg_3]
+
+  # execution TBD
+end
+def complex_query(arg_1, arg_2, arg_3) do
+  expected = "arg_1 :: [integer()], arg_2 :: String.t() | nil, arg_3 :: [boolean()] | nil"
+  received = inspect([arg_1, arg_2, arg_3])
+
+  raise ArgumentError, """
+  Invalid arguments for complex_query/3.
+
+  Expected:
+    arg_1 :: [integer()], arg_2 :: String.t() | nil, arg_3 :: [boolean()] | nil
+
+  Received:
+    #{received}
+  """
+end
+
+

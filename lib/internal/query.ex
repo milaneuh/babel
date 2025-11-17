@@ -49,70 +49,128 @@ defmodule Babel.Query do
     %TypedQuery{
       file: file,
       name: name,
-      content: content,
-      comment: comment,
+      content: sql_content,
+      comment: raw_comment,
       params: params,
       returns: returns
     } = query
 
-    param_var = fn i -> "arg_#{i + 1}" end
+    param_name = fn i -> "arg_#{i + 1}" end
 
-    function_params =
+    param_vars =
       params
       |> Enum.with_index()
-      |> Enum.map(fn {_type, i} -> param_var.(i) end)
+      |> Enum.map(fn {_type, i} -> param_name.(i) end)
 
     constructor_name = ValueIdentifier.to_type_name(name) <> "Row"
 
-    struct_fields =
-      Enum.map(returns, fn %Field{label: label} -> String.to_atom(label) end)
+    row_fields =
+      Enum.map(returns, fn %Field{label: label} ->
+        String.to_atom(label)
+      end)
 
-    struct_field_types =
+    row_field_typespecs =
       returns
       |> Enum.map(fn %Field{label: label, type: type} ->
         "    #{label}: #{Babel.Type.to_typespec(type)}"
       end)
       |> Enum.join(",\n")
 
-    function_param_types =
+    param_typespecs =
       params
       |> Enum.with_index()
-      |> Enum.map(fn {param_type, i} ->
-        "#{param_var.(i)} :: #{Babel.Type.to_typespec(param_type)}"
+      |> Enum.map(fn {type, i} ->
+        "#{param_name.(i)} :: #{Babel.Type.to_typespec(type)}"
       end)
       |> Enum.join(", ")
 
-    doc_comment =
-      comment
+    guard_expressions =
+      params
+      |> Enum.with_index()
+      |> Enum.map(fn {type, i} ->
+        Babel.Type.to_guard(type, param_name.(i))
+      end)
+      |> Enum.join(" and ")
+
+    guard_clause =
+      case guard_expressions do
+        "" -> ""
+        _ -> " when " <> guard_expressions
+      end
+
+    cleaned_comment =
+      raw_comment
       |> Enum.map(&String.replace(&1, "--", ""))
       |> Enum.join("\n  ")
 
-    struct_module = """
-    defmodule #{constructor_name} do
-      @enforce_keys #{inspect(struct_fields)}
-      defstruct #{inspect(struct_fields)}
+    # Only generate the row struct when there are return fields
+    row_module_code =
+      case returns do
+        [] ->
+          ""
 
-      @type t :: %__MODULE__{
-    #{struct_field_types}
-      }
-    end
-    """
+        _ ->
+          """
+          defmodule #{constructor_name} do
+            @enforce_keys #{inspect(row_fields)}
+            defstruct #{inspect(row_fields)}
 
-    fun = """
+            @type t :: %__MODULE__{
+          #{row_field_typespecs}
+            }
+          end
+          """
+      end
+
+    # Return type: struct when there are returns, :ok when there are none
+    result_typespec =
+      case returns do
+        [] -> ":ok"
+        _ -> "#{constructor_name}.t()"
+      end
+
+    fallback_clause =
+      case param_vars do
+        [] ->
+          ""
+
+        _ ->
+          """
+          def #{name.name}(#{Enum.join(param_vars, ", ")}) do
+            expected = "#{param_typespecs}"
+            received = inspect([#{Enum.join(param_vars, ", ")}])
+
+            raise ArgumentError, \"\"\"
+            Invalid arguments for #{name.name}/#{length(param_vars)}.
+
+            Expected:
+              #{param_typespecs}
+
+            Received:
+              \#{received}
+            \"\"\"
+          end
+          """
+      end
+
+    function_code = """
     @doc \"\"\"
     Runs the #{name.name} query defined in #{file}.
 
-    #{doc_comment}
+    #{cleaned_comment}
     \"\"\"
-    @spec #{name.name}(#{function_param_types}) :: #{constructor_name}.t()
-    def #{name.name}(#{Enum.join(function_params, ", ")}) do
-      query = #{inspect(content)}
-      params = [#{Enum.join(function_params, ", ")}]
+    @spec #{name.name}(#{param_typespecs}) :: #{result_typespec}
+    def #{name.name}(#{Enum.join(param_vars, ", ")})#{guard_clause} do
+      query = #{inspect(sql_content)}
+      params = [#{Enum.join(param_vars, ", ")}]
 
       # execution TBD
     end
+    #{fallback_clause}
     """
 
-    [struct_module, "", fun] |> Enum.join("\n")
+    [row_module_code, "", function_code]
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.join("\n")
   end
 end

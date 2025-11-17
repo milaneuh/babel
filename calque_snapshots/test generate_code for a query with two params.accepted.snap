@@ -35,17 +35,31 @@ defmodule FindUserRow do
   }
 end
 
-
 @doc """
 Runs the find_user query defined in queries/with_params.sql.
 
  Find a user by id and status
 """
 @spec find_user(arg_1 :: integer(), arg_2 :: String.t()) :: FindUserRow.t()
-def find_user(arg_1, arg_2) do
+def find_user(arg_1, arg_2) when is_integer(arg_1) and is_binary(arg_2) do
   query = "SELECT * FROM users WHERE id = $1 AND status = $2"
   params = [arg_1, arg_2]
 
   # execution TBD
 end
+def find_user(arg_1, arg_2) do
+  expected = "arg_1 :: integer(), arg_2 :: String.t()"
+  received = inspect([arg_1, arg_2])
+
+  raise ArgumentError, """
+  Invalid arguments for find_user/2.
+
+  Expected:
+    arg_1 :: integer(), arg_2 :: String.t()
+
+  Received:
+    #{received}
+  """
+end
+
 

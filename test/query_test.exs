@@ -74,11 +74,6 @@ defmodule Babel.QueryTest do
 
     code = Query.generate_code(query)
 
-    fun_head_line =
-      code
-      |> String.split("\n")
-      |> Enum.find(&String.starts_with?(&1, "def get_all_users("))
-
     """
     GIVEN a TypedQuery with no parameters:
 
@@ -112,11 +107,6 @@ defmodule Babel.QueryTest do
 
     code = Query.generate_code(query)
 
-    fun_head_line =
-      code
-      |> String.split("\n")
-      |> Enum.find(&String.starts_with?(&1, "def find_user("))
-
     """
     GIVEN a TypedQuery with two parameters:
 
@@ -127,6 +117,80 @@ defmodule Babel.QueryTest do
       code = Babel.Query.generate_code(query)
 
     THEN the generated Elixir code should be:
+
+    #{code}
+    """
+    |> Calque.check()
+  end
+
+  test "generate_code for a query with complex guard types" do
+    query = %TypedQuery{
+      file: "queries/complex_params.sql",
+      starting_line: 5,
+      name: %ValueIdentifier{name: "complex_query"},
+      comment: ["-- A query using complex guard types"],
+      content: "SELECT * FROM events WHERE ids = $1 AND label = $2 AND flags = $3",
+      params: [
+        Babel.Type.array(Babel.Type.int()),
+        Babel.Type.option(Babel.Type.string()),
+        Babel.Type.option(Babel.Type.array(Babel.Type.bool()))
+      ],
+      returns: [
+        %Field{label: "id", type: Babel.Type.int()},
+        %Field{label: "label", type: Babel.Type.string()},
+        %Field{label: "flag", type: Babel.Type.bool()}
+      ]
+    }
+
+    code = Query.generate_code(query)
+
+    """
+    GIVEN a TypedQuery with complex parameter types (arrays, options, nested option of array):
+
+      #{inspect(query, pretty: true, limit: :infinity)}
+
+    WHEN generating Elixir code with:
+
+      code = Babel.Query.generate_code(query)
+
+    THEN the generated Elixir code should include a guarded function clause
+    and a fallback clause raising an ArgumentError, with guards derived from Babel.Type.to_guard/2:
+
+    #{code}
+    """
+    |> Calque.check()
+  end
+
+  test "generate_code for a query with params but no returns and a multi line comment" do
+    query = %TypedQuery{
+      file: "queries/no_returns.sql",
+      starting_line: 99,
+      name: %ValueIdentifier{name: "log_event"},
+      comment: [
+        "-- This query logs an event",
+        "-- It does not return any row"
+      ],
+      content: "INSERT INTO logs(message, meta) VALUES ($1, $2)",
+      params: [
+        Babel.Type.string(),
+        Babel.Type.option(Babel.Type.string())
+      ],
+      returns: []
+    }
+
+    code = Query.generate_code(query)
+
+    """
+    GIVEN a TypedQuery with parameters but no return fields and a multi line comment:
+
+      #{inspect(query, pretty: true, limit: :infinity)}
+
+    WHEN generating Elixir code with:
+
+      code = Babel.Query.generate_code(query)
+
+    THEN the generated Elixir code should not define an struct module
+    but it should have a function with a guard clause and a fallback ArgumentError clause:
 
     #{code}
     """

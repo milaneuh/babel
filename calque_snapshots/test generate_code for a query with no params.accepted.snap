@@ -33,7 +33,6 @@ defmodule GetAllUsersRow do
   }
 end
 
-
 @doc """
 Runs the get_all_users query defined in queries/no_params.sql.
 
@@ -46,4 +45,5 @@ def get_all_users() do
 
   # execution TBD
 end
+
 

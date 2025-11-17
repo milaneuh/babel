@@ -18,7 +18,7 @@ defmodule Babel.Type do
   def array(inner), do: {:array, inner}
   def option(inner), do: {:option, inner}
 
-  @spec to_typespec(__MODULE__.t()) :: String.t()
+  @spec to_typespec(t()) :: String.t()
   def to_typespec(:int), do: "integer()"
   def to_typespec(:float), do: "float()"
   def to_typespec(:bool), do: "boolean()"
@@ -29,6 +29,17 @@ defmodule Babel.Type do
 
   def to_typespec({:option, inner}),
     do: "#{to_typespec(inner)} | nil"
+
+  @spec to_guard(t(), String.t()) :: String.t()
+  def to_guard(:int, var), do: "is_integer(#{var})"
+  def to_guard(:float, var), do: "is_float(#{var})"
+  def to_guard(:bool, var), do: "is_boolean(#{var})"
+  def to_guard(:string, var), do: "is_binary(#{var})"
+
+  def to_guard({:array, _inner}, var), do: "is_list(#{var})"
+
+  def to_guard({:option, inner}, var),
+    do: "(#{to_guard(inner, var)} or is_nil(#{var}))"
 end
 
 defmodule Babel.Field do

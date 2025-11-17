@@ -3,6 +3,7 @@ defmodule TypesTest do
   require Calque
 
   alias Babel.ValueIdentifier
+  alias Babel.Type
 
   #
   # ValueIdentifier.new/1
@@ -151,5 +152,117 @@ defmodule TypesTest do
     """
     |> Calque.check()
   end
-end
 
+  #
+  # Babel.Type.to_guard/2
+  #
+
+  test "Babel.Type.to_guard/2 generates correct guards for primitive types" do
+    var_name = "value"
+
+    guards = %{
+      int: Type.to_guard(Type.int(), var_name),
+      float: Type.to_guard(Type.float(), var_name),
+      bool: Type.to_guard(Type.bool(), var_name),
+      string: Type.to_guard(Type.string(), var_name)
+    }
+
+    """
+    GIVEN a set of primitive Babel types:
+
+      types = [:int, :float, :bool, :string]
+      var_name = #{inspect(var_name)}
+
+    WHEN generating guard expressions:
+
+      guards = %{
+        int:   Babel.Type.to_guard(Babel.Type.int(), var_name),
+        float: Babel.Type.to_guard(Babel.Type.float(), var_name),
+        bool:  Babel.Type.to_guard(Babel.Type.bool(), var_name),
+        string: Babel.Type.to_guard(Babel.Type.string(), var_name)
+      }
+
+    THEN it should generate the expected guard expressions for each primitive type:
+
+      #{inspect(guards)}
+    """
+    |> Calque.check()
+  end
+
+  test "Babel.Type.to_guard/2 generates correct guards for option types, including nesting" do
+    var_name = "value"
+
+    option_int = Type.option(Type.int())
+    option_string = Type.option(Type.string())
+    nested_option_int = Type.option(Type.option(Type.int()))
+    option_array_int = Type.option(Type.array(Type.int()))
+
+    guards = %{
+      option_int: Type.to_guard(option_int, var_name),
+      option_string: Type.to_guard(option_string, var_name),
+      nested_option_int: Type.to_guard(nested_option_int, var_name),
+      option_array_int: Type.to_guard(option_array_int, var_name)
+    }
+
+    """
+    GIVEN several option-based Babel types:
+
+      option_int         = Babel.Type.option(Babel.Type.int())
+      option_string      = Babel.Type.option(Babel.Type.string())
+      nested_option_int  = Babel.Type.option(Babel.Type.option(Babel.Type.int()))
+      option_array_int   = Babel.Type.option(Babel.Type.array(Babel.Type.int()))
+      var_name           = #{inspect(var_name)}
+
+    WHEN generating guard expressions for these types:
+
+      guards = %{
+        option_int:        Babel.Type.to_guard(option_int, var_name),
+        option_string:     Babel.Type.to_guard(option_string, var_name),
+        nested_option_int: Babel.Type.to_guard(nested_option_int, var_name),
+        option_array_int:  Babel.Type.to_guard(option_array_int, var_name)
+      }
+
+    THEN it should generate guard expressions that allow the inner type or nil:
+
+      #{inspect(guards)}
+    """
+    |> Calque.check()
+  end
+
+  test "Babel.Type.to_guard/2 generates guards for array types and ignores inner nesting" do
+    var_name = "value"
+
+    array_int = Type.array(Type.int())
+    array_option_int = Type.array(Type.option(Type.int()))
+    nested_array_bool = Type.array(Type.array(Type.bool()))
+
+    guards = %{
+      array_int: Type.to_guard(array_int, var_name),
+      array_option_int: Type.to_guard(array_option_int, var_name),
+      nested_array_bool: Type.to_guard(nested_array_bool, var_name)
+    }
+
+    """
+    GIVEN several array-based Babel types, including nested arrays and arrays of options:
+
+      array_int         = Babel.Type.array(Babel.Type.int())
+      array_option_int  = Babel.Type.array(Babel.Type.option(Babel.Type.int()))
+      nested_array_bool = Babel.Type.array(Babel.Type.array(Babel.Type.bool()))
+      var_name          = #{inspect(var_name)}
+
+    WHEN generating guard expressions for these types:
+
+      guards = %{
+        array_int:         Babel.Type.to_guard(array_int, var_name),
+        array_option_int:  Babel.Type.to_guard(array_option_int, var_name),
+        nested_array_bool: Babel.Type.to_guard(nested_array_bool, var_name)
+      }
+
+    THEN it should generate array guards that only enforce list-ness at the boundary:
+
+      #{inspect(guards)}
+    """
+    |> Calque.check()
+  end
+
+end

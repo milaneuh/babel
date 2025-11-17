@@ -1,0 +1,21 @@
+---
+version: 1.3.1
+title: test Babel.Type.to_guard/2 generates correct guards for primitive types
+---
+GIVEN a set of primitive Babel types:
+
+  types = [:int, :float, :bool, :string]
+  var_name = "value"
+
+WHEN generating guard expressions:
+
+  guards = %{
+    int:   Babel.Type.to_guard(Babel.Type.int(), var_name),
+    float: Babel.Type.to_guard(Babel.Type.float(), var_name),
+    bool:  Babel.Type.to_guard(Babel.Type.bool(), var_name),
+    string: Babel.Type.to_guard(Babel.Type.string(), var_name)
+  }
+
+THEN it should generate the expected guard expressions for each primitive type:
+
+  %{float: "is_float(value)", string: "is_binary(value)", bool: "is_boolean(value)", int: "is_integer(value)"}
