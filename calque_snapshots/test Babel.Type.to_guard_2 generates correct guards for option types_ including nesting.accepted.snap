@@ -1,0 +1,24 @@
+---
+version: 1.3.1
+title: test Babel.Type.to_guard/2 generates correct guards for option types, including nesting
+---
+GIVEN several option-based Babel types:
+
+  option_int         = Babel.Type.option(Babel.Type.int())
+  option_string      = Babel.Type.option(Babel.Type.string())
+  nested_option_int  = Babel.Type.option(Babel.Type.option(Babel.Type.int()))
+  option_array_int   = Babel.Type.option(Babel.Type.array(Babel.Type.int()))
+  var_name           = "value"
+
+WHEN generating guard expressions for these types:
+
+  guards = %{
+    option_int:        Babel.Type.to_guard(option_int, var_name),
+    option_string:     Babel.Type.to_guard(option_string, var_name),
+    nested_option_int: Babel.Type.to_guard(nested_option_int, var_name),
+    option_array_int:  Babel.Type.to_guard(option_array_int, var_name)
+  }
+
+THEN it should generate guard expressions that allow the inner type or nil:
+
+  %{option_int: "(is_integer(value) or is_nil(value))", option_string: "(is_binary(value) or is_nil(value))", nested_option_int: "((is_integer(value) or is_nil(value)) or is_nil(value))", option_array_int: "(is_list(value) or is_nil(value))"}

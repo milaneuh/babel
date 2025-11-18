@@ -1,0 +1,61 @@
+---
+version: 1.3.1
+title: test generate_code for a query with params but no returns and a multi line comment
+---
+GIVEN a TypedQuery with parameters but no return fields and a multi line comment:
+
+  %Babel.Query.TypedQuery{
+  file: "queries/no_returns.sql",
+  starting_line: 99,
+  name: %Babel.ValueIdentifier{name: "log_event"},
+  comment: ["-- This query logs an event", "-- It does not return any row"],
+  content: "INSERT INTO logs(message, meta) VALUES ($1, $2)",
+  params: [:string, {:option, :string}],
+  returns: []
+}
+
+WHEN generating Elixir code with:
+
+  code = Babel.Query.generate_code(query)
+
+THEN the generated Elixir code should define an empty row struct module
+and a function with a guard clause and a fallback ArgumentError clause:
+
+defmodule LogEventRow do
+  @enforce_keys []
+  defstruct []
+
+  @type t :: %__MODULE__{
+
+  }
+end
+
+@doc """
+Runs the log_event query defined in queries/no_returns.sql.
+
+ This query logs an event
+   It does not return any row
+"""
+@spec log_event(arg_1 :: String.t(), arg_2 :: String.t() | nil) :: LogEventRow.t()
+def log_event(arg_1, arg_2) when is_binary(arg_1) and (is_binary(arg_2) or is_nil(arg_2)) do
+  query = "INSERT INTO logs(message, meta) VALUES ($1, $2)"
+  params = [arg_1, arg_2]
+
+  # execution TBD
+end
+def log_event(arg_1, arg_2) do
+  expected = "arg_1 :: String.t(), arg_2 :: String.t() | nil"
+  received = inspect([arg_1, arg_2])
+
+  raise ArgumentError, """
+  Invalid arguments for log_event/2.
+
+  Expected:
+    arg_1 :: String.t(), arg_2 :: String.t() | nil
+
+  Received:
+    #{received}
+  """
+end
+
+
