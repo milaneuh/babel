@@ -21,7 +21,7 @@ defmodule Babel.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:calque, "~> 1.3.1", only: [:test, :dev]},
+      {:calque, "~> 1.4.0", only: [:test, :dev]},
       {:kase, "~> 1.1"}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
