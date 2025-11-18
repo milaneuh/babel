@@ -1,0 +1,14 @@
+---
+version: 1.3.1
+title: test path handling returns relative paths from project root
+---
+GIVEN an SQL file at lib/sql/query.sql
+
+WHEN collected with absolute path: /tmp/babel_test_6818/lib/sql/query.sql
+
+THEN the SqlFile struct contains:
+  path: "lib/sql/query.sql"
+  name: "query"
+  content: "SELECT 1;"
+
+AND path is relative to project root

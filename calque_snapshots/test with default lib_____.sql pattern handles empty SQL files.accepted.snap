@@ -1,0 +1,15 @@
+---
+version: 1.3.1
+title: test with default lib/**/*.sql pattern handles empty SQL files
+---
+GIVEN SQL files with various content states:
+  lib/sql/empty.sql: ""
+  lib/sql/whitespace.sql: "   \n\n   "
+  lib/sql/normal.sql: "SELECT 1;"
+
+WHEN collecting
+
+THEN we collect all files including empty ones:
+  lib/sql/empty.sql (name: empty): ""
+  lib/sql/normal.sql (name: normal): "SELECT 1;"
+  lib/sql/whitespace.sql (name: whitespace): ""

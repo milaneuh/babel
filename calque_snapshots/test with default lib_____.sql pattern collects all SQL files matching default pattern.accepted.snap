@@ -1,0 +1,26 @@
+---
+version: 1.3.1
+title: test with default lib/**/*.sql pattern collects all SQL files matching default pattern
+---
+GIVEN this file structure:
+  lib/
+    sql/
+      users.sql: "SELECT * FROM users;"
+      posts.sql: "SELECT id, title FROM posts;"
+    deep/
+      nested/
+        sql/
+          comments.sql: "SELECT * FROM comments;"
+    ignored.txt: "not sql"
+  priv/
+    sql/
+      migrations.sql: "CREATE TABLE foo;"
+  src/
+    queries.sql: "SELECT 1;"
+
+WHEN collecting with default pattern "lib/**/*.sql"
+
+THEN we collect only files under lib/ with .sql extension:
+  lib/deep/nested/sql/comments.sql (name: comments): "SELECT * FROM comments;"
+  lib/sql/posts.sql (name: posts): "SELECT id, title FROM posts;"
+  lib/sql/users.sql (name: users): "SELECT * FROM users;"
