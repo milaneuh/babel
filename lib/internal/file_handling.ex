@@ -49,11 +49,10 @@ defmodule Babel.FileHandling do
   defp read_all(path_set, root) do
     path_set
     |> Enum.map(&read(&1, root))
-    |> Enum.reject(&is_nil/1)
   end
 
-  @spec read(String.t(), String.t()) :: SqlFile.t() | nil
-  defp read(path, root) do
+  @spec read!(String.t(), String.t()) :: SqlFile.t() | nil
+  defp read!(path, root) do
     case File.read(path) do
       {:ok, content} ->
         %SqlFile{
@@ -62,8 +61,9 @@ defmodule Babel.FileHandling do
           content: content
         }
 
-      {:error, _reason} ->
-        nil
+      {:error, reason} ->
+        # TODO: We will want to centralise the error handling but that needs more planning so for now: 
+        raise "The SQL file at '#{path}' could not be loaded for the following reason: #{IO.inspect(reason)}"
     end
   end
 

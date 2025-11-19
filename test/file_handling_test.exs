@@ -3,7 +3,7 @@ defmodule Babel.FileHandlingTest do
   require Calque
 
   setup do
-    test_dir = Path.join(System.tmp_dir!(), "babel_test_#{:rand.uniform(10000)}")
+    test_dir = Path.join(System.tmp_dir!(), "babel_test_#{:erlang.unique_integer([:positive])}")
     File.mkdir_p!(test_dir)
 
     original_config = Application.get_env(:babel, :sql_path_pattern)
@@ -177,7 +177,7 @@ defmodule Babel.FileHandlingTest do
       """
       GIVEN an SQL file at lib/sql/query.sql
 
-      WHEN collected with absolute path: #{Path.join(test_dir, "lib/sql/query.sql")}
+      WHEN "lib/sql/query.sql" is collected with absolute path of the test repo
 
       THEN the SqlFile struct contains:
         path: #{inspect(file.path)}
@@ -233,4 +233,3 @@ defmodule Babel.FileHandlingTest do
     |> Enum.join("\n")
   end
 end
-

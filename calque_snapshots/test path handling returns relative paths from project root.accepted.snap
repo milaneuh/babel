@@ -4,7 +4,7 @@ title: test path handling returns relative paths from project root
 ---
 GIVEN an SQL file at lib/sql/query.sql
 
-WHEN collected with absolute path: /tmp/babel_test_6818/lib/sql/query.sql
+WHEN "lib/sql/query.sql" is collected with absolute path of the test repo
 
 THEN the SqlFile struct contains:
   path: "lib/sql/query.sql"
