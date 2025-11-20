@@ -1,0 +1,10 @@
+---
+version: 1.3.1
+title: test error handling fails fast when valid file exists alongside empty file
+---
+GIVEN a valid SQL file and an empty SQL file
+
+WHEN collecting SQL files
+
+THEN we fail fast with an error:
+  The SQL file at '<test_dir>/lib/sql/empty.sql' is empty. Please provide a valid file for code generation.

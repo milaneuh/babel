@@ -61,31 +61,6 @@ defmodule Babel.FileHandlingTest do
       |> Calque.check()
     end
 
-    test "handles empty SQL files", %{test_dir: test_dir} do
-      Application.delete_env(:babel, :sql_path_pattern)
-
-      create_files(test_dir, [
-        {"lib/sql/empty.sql", ""},
-        {"lib/sql/whitespace.sql", "   \n\n   "},
-        {"lib/sql/normal.sql", "SELECT 1;"}
-      ])
-
-      result = Babel.FileHandling.collect_sql_files!(test_dir)
-
-      """
-      GIVEN SQL files with various content states:
-        lib/sql/empty.sql: ""
-        lib/sql/whitespace.sql: "   \\n\\n   "
-        lib/sql/normal.sql: "SELECT 1;"
-
-      WHEN collecting
-
-      THEN we collect all files including empty ones:
-      #{format_results(result)}
-      """
-      |> Calque.check()
-    end
-
     test "returns empty list when no SQL files exist", %{test_dir: test_dir} do
       Application.delete_env(:babel, :sql_path_pattern)
 
@@ -211,6 +186,75 @@ defmodule Babel.FileHandlingTest do
 
       THEN names are extracted without .sql extension:
       #{inspect(names)}
+      """
+      |> Calque.check()
+    end
+  end
+
+  describe "error handling" do
+    test "raises on empty SQL file", %{test_dir: test_dir} do
+      Application.delete_env(:babel, :sql_path_pattern)
+
+      create_files(test_dir, [
+        {"lib/sql/empty.sql", ""}
+      ])
+
+      error = catch_error(Babel.FileHandling.collect_sql_files!(test_dir))
+      # To avoid the shifting absolute paths:
+      normalised_message = error.message |> String.replace(test_dir, "<test_dir>")
+
+      """
+      GIVEN an empty SQL file at lib/sql/empty.sql
+
+      WHEN collecting SQL files
+
+      THEN we raise an error:
+        #{normalised_message}
+      """
+      |> Calque.check()
+    end
+
+    test "raises on whitespace-only SQL file", %{test_dir: test_dir} do
+      Application.delete_env(:babel, :sql_path_pattern)
+
+      create_files(test_dir, [
+        {"lib/sql/whitespace.sql", "   \n\n   "}
+      ])
+
+      error = catch_error(Babel.FileHandling.collect_sql_files!(test_dir))
+      # To avoid the shifting absolute paths:
+      normalised_message = error.message |> String.replace(test_dir, "<test_dir>")
+
+      """
+      GIVEN a whitespace-only SQL file at lib/sql/whitespace.sql
+
+      WHEN collecting SQL files
+
+      THEN we raise an error:
+        #{normalised_message}
+      """
+      |> Calque.check()
+    end
+
+    test "fails fast when valid file exists alongside empty file", %{test_dir: test_dir} do
+      Application.delete_env(:babel, :sql_path_pattern)
+
+      create_files(test_dir, [
+        {"lib/sql/valid.sql", "SELECT 1;"},
+        {"lib/sql/empty.sql", ""}
+      ])
+
+      error = catch_error(Babel.FileHandling.collect_sql_files!(test_dir))
+      # To avoid the shifting absolute paths:
+      normalised_message = error.message |> String.replace(test_dir, "<test_dir>")
+
+      """
+      GIVEN a valid SQL file and an empty SQL file
+
+      WHEN collecting SQL files
+
+      THEN we fail fast with an error:
+        #{normalised_message}
       """
       |> Calque.check()
     end
