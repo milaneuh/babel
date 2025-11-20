@@ -1,0 +1,26 @@
+---
+version: 1.3.1
+title: test from_sql_file accepts whitespace before the leading comment
+---
+GIVEN a %SqlFile{} where content starts with whitespace then a valid comment:
+
+  %Babel.FileHandling.SqlFile{
+  path: "lib/queries/whitespace_then_comment.sql",
+  name: "whitespace_then_comment",
+  content: "\n\n\n  -- actual comment\n  SELECT 1;\n"
+}
+
+WHEN calling:
+
+  {:ok, untyped_query} = Babel.Query.from_sql_file(file)
+
+THEN the resulting UntypedQuery is:
+
+  %Babel.Query.UntypedQuery{
+  file: "lib/queries/whitespace_then_comment.sql",
+  starting_line: 1,
+  name: %Babel.ValueIdentifier{name: "whitespace_then_comment"},
+  comment: ["actual comment"],
+  content: "\n\n\n  -- actual comment\n  SELECT 1;\n",
+  parent_folder: "lib"
+}

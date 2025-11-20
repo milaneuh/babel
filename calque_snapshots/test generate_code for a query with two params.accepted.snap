@@ -10,6 +10,7 @@ GIVEN a TypedQuery with two parameters:
   name: %Babel.ValueIdentifier{name: "find_user"},
   comment: ["-- Find a user by id and status"],
   content: "SELECT * FROM users WHERE id = $1 AND status = $2",
+  parent_folder: "user",
   params: [:int, :string],
   returns: [
     %Babel.Field{label: "id", type: :int},

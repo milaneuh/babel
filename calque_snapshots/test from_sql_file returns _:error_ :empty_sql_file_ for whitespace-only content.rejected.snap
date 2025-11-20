@@ -1,0 +1,19 @@
+---
+version: 1.3.1
+title: test from_sql_file returns {:error, :empty_sql_file} for whitespace-only content
+---
+GIVEN a %SqlFile{} with whitespace-only content:
+
+  %Babel.FileHandling.SqlFile{
+  path: "lib/queries/only_whitespace.sql",
+  name: "only_whitespace",
+  content: "    \n   \n  "
+}
+
+WHEN calling:
+
+  result = Babel.Query.from_sql_file(file)
+
+THEN the returned value is:
+
+  {:error, :empty_sql_file}

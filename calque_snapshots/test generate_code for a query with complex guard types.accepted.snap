@@ -10,6 +10,7 @@ GIVEN a TypedQuery with complex parameter types (arrays, options, nested option 
   name: %Babel.ValueIdentifier{name: "complex_query"},
   comment: ["-- A query using complex guard types"],
   content: "SELECT * FROM events WHERE ids = $1 AND label = $2 AND flags = $3",
+  parent_folder: "lib",
   params: [array: :int, option: :string, option: {:array, :bool}],
   returns: [
     %Babel.Field{label: "id", type: :int},
