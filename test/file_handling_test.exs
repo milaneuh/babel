@@ -34,7 +34,7 @@ defmodule Babel.FileHandlingTest do
         {"src/queries.sql", "SELECT 1;"}
       ])
 
-      result = Babel.FileHandling.collect_sql_files(test_dir)
+      result = Babel.FileHandling.collect_sql_files!(test_dir)
 
       """
       GIVEN this file structure:
@@ -70,7 +70,7 @@ defmodule Babel.FileHandlingTest do
         {"lib/sql/normal.sql", "SELECT 1;"}
       ])
 
-      result = Babel.FileHandling.collect_sql_files(test_dir)
+      result = Babel.FileHandling.collect_sql_files!(test_dir)
 
       """
       GIVEN SQL files with various content states:
@@ -95,7 +95,7 @@ defmodule Babel.FileHandlingTest do
         {"README.md", "# Hello"}
       ])
 
-      result = Babel.FileHandling.collect_sql_files(test_dir)
+      result = Babel.FileHandling.collect_sql_files!(test_dir)
 
       """
       GIVEN no .sql files in lib directory:
@@ -122,7 +122,7 @@ defmodule Babel.FileHandlingTest do
         {"priv/migrations/001_init.sql", "CREATE TABLE users;"}
       ])
 
-      result = Babel.FileHandling.collect_sql_files(test_dir)
+      result = Babel.FileHandling.collect_sql_files!(test_dir)
 
       """
       GIVEN custom pattern "priv/**/*.sql" and files:
@@ -147,7 +147,7 @@ defmodule Babel.FileHandlingTest do
         {"root.sql", "SELECT 3;"}
       ])
 
-      result = Babel.FileHandling.collect_sql_files(test_dir)
+      result = Babel.FileHandling.collect_sql_files!(test_dir)
 
       """
       GIVEN pattern "*.sql" (root only) and files:
@@ -172,7 +172,7 @@ defmodule Babel.FileHandlingTest do
         {"lib/sql/query.sql", "SELECT 1;"}
       ])
 
-      [file] = Babel.FileHandling.collect_sql_files(test_dir)
+      [file] = Babel.FileHandling.collect_sql_files!(test_dir)
 
       """
       GIVEN an SQL file at lib/sql/query.sql
@@ -198,7 +198,7 @@ defmodule Babel.FileHandlingTest do
         {"lib/query.v2.sql", "SELECT 3;"}
       ])
 
-      result = Babel.FileHandling.collect_sql_files(test_dir)
+      result = Babel.FileHandling.collect_sql_files!(test_dir)
       names = result |> Enum.map(& &1.name) |> Enum.sort()
 
       """

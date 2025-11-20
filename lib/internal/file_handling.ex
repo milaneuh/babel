@@ -29,13 +29,13 @@ defmodule Babel.FileHandling do
   Returns a list of SqlFile structs containing the relative path, name, and content
   of each SQL file found.
   """
-  @spec collect_sql_files() :: [SqlFile.t()]
-  def collect_sql_files, do: collect_sql_files(project_root())
+  @spec collect_sql_files!() :: [SqlFile.t()]
+  def collect_sql_files!, do: collect_sql_files!(project_root())
 
-  @spec collect_sql_files(String.t()) :: [SqlFile.t()]
-  def collect_sql_files(root) do
+  @spec collect_sql_files!(String.t()) :: [SqlFile.t()]
+  def collect_sql_files!(root) do
     collect(root)
-    |> read_all(root)
+    |> read_all!(root)
   end
 
   @spec collect(String.t()) :: [String.t()]
@@ -45,13 +45,13 @@ defmodule Babel.FileHandling do
     Path.wildcard(dir_glob)
   end
 
-  @spec read_all([String.t()], String.t()) :: [SqlFile.t()]
-  defp read_all(path_set, root) do
+  @spec read_all!([String.t()], String.t()) :: [SqlFile.t()]
+  defp read_all!(path_set, root) do
     path_set
-    |> Enum.map(&read(&1, root))
+    |> Enum.map(&read!(&1, root))
   end
 
-  @spec read!(String.t(), String.t()) :: SqlFile.t() | nil
+  @spec read!(String.t(), String.t()) :: SqlFile.t()
   defp read!(path, root) do
     case File.read(path) do
       {:ok, content} ->
