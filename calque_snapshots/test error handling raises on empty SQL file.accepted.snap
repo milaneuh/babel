@@ -1,0 +1,10 @@
+---
+version: 1.3.1
+title: test error handling raises on empty SQL file
+---
+GIVEN an empty SQL file at lib/sql/empty.sql
+
+WHEN collecting SQL files
+
+THEN we raise an error:
+  The SQL file at '<test_dir>/lib/sql/empty.sql' is empty. Please provide a valid file for code generation.

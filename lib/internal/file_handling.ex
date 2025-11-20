@@ -53,18 +53,43 @@ defmodule Babel.FileHandling do
 
   @spec read!(String.t(), String.t()) :: SqlFile.t()
   defp read!(path, root) do
+    path
+    |> read_file!()
+    |> validate_content!(path)
+    |> to_sql_file(path, root)
+  end
+
+  @spec read_file!(String.t()) :: String.t()
+  defp read_file!(path) do
     case File.read(path) do
       {:ok, content} ->
-        %SqlFile{
-          path: Path.relative_to(path, root),
-          name: Path.basename(path, ".sql"),
-          content: content
-        }
+        content
 
+      # TODO: We will want to centralise the error handling but that needs more planning so for now:
       {:error, reason} ->
-        # TODO: We will want to centralise the error handling but that needs more planning so for now: 
-        raise "The SQL file at '#{path}' could not be loaded for the following reason: #{IO.inspect(reason)}"
+        raise "The SQL file at '#{path}' could not be loaded for the following reason: #{inspect(reason)}"
     end
+  end
+
+  @spec validate_content!(String.t(), String.t()) :: String.t()
+  defp validate_content!(content, path) do
+    case String.trim(content) do
+      "" ->
+        # TODO: See above
+        raise "The SQL file at '#{path}' is empty. Please provide a valid file for code generation."
+
+      trimmed ->
+        trimmed
+    end
+  end
+
+  @spec to_sql_file(String.t(), String.t(), String.t()) :: SqlFile.t()
+  defp to_sql_file(content, path, root) do
+    %SqlFile{
+      path: Path.relative_to(path, root),
+      name: Path.basename(path, ".sql"),
+      content: content
+    }
   end
 
   @spec project_root() :: String.t()
