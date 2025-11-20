@@ -1,0 +1,14 @@
+---
+version: 1.3.1
+title: test with custom patterns handles root-level pattern
+---
+GIVEN pattern "*.sql" (root only) and files:
+  query.sql
+  root.sql
+  lib/nested.sql
+
+WHEN collecting
+
+THEN we only get root-level SQL files:
+  query.sql (name: query): "SELECT 1;"
+  root.sql (name: root): "SELECT 3;"

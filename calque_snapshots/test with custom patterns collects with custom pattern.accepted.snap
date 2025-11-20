@@ -1,0 +1,14 @@
+---
+version: 1.3.1
+title: test with custom patterns collects with custom pattern
+---
+GIVEN custom pattern "priv/**/*.sql" and files:
+  lib/ignored.sql
+  priv/queries/users.sql
+  priv/migrations/001_init.sql
+
+WHEN collecting
+
+THEN we only get files from priv/:
+  priv/migrations/001_init.sql (name: 001_init): "CREATE TABLE users;"
+  priv/queries/users.sql (name: users): "SELECT * FROM users;"

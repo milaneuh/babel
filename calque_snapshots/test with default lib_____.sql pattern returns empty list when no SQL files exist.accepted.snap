@@ -1,0 +1,13 @@
+---
+version: 1.3.1
+title: test with default lib/**/*.sql pattern returns empty list when no SQL files exist
+---
+GIVEN no .sql files in lib directory:
+  lib/queries.txt
+  lib/data.json
+  README.md
+
+WHEN collecting
+
+THEN we get an empty list:
+[]
