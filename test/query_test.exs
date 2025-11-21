@@ -7,6 +7,7 @@ defmodule Babel.QueryTest do
   alias Babel.ValueIdentifier
   alias Babel.Field
   alias Babel.Query.TypedQuery
+  alias Babel.FileHandling
 
   test "add_types builds a TypedQuery from an UntypedQuery with Babel types" do
     untyped = %UntypedQuery{
@@ -14,7 +15,8 @@ defmodule Babel.QueryTest do
       starting_line: 42,
       name: %ValueIdentifier{name: "my_query"},
       comment: ["-- this is a comment", "-- it spans multiple lines"],
-      content: "sql query body"
+      content: "sql query body",
+      parent_folder: "user"
     }
 
     # Valid Babel.Type.t() values
@@ -65,6 +67,7 @@ defmodule Babel.QueryTest do
       name: %ValueIdentifier{name: "get_all_users"},
       comment: [],
       content: "SELECT * FROM users",
+      parent_folder: "user",
       params: [],
       returns: [
         %Field{label: "id", type: Babel.Type.int()},
@@ -98,6 +101,7 @@ defmodule Babel.QueryTest do
       comment: ["-- Find a user by id and status"],
       content: "SELECT * FROM users WHERE id = $1 AND status = $2",
       params: [Babel.Type.int(), Babel.Type.string()],
+      parent_folder: "user",
       returns: [
         %Field{label: "id", type: Babel.Type.int()},
         %Field{label: "name", type: Babel.Type.string()},
@@ -130,6 +134,7 @@ defmodule Babel.QueryTest do
       name: %ValueIdentifier{name: "complex_query"},
       comment: ["-- A query using complex guard types"],
       content: "SELECT * FROM events WHERE ids = $1 AND label = $2 AND flags = $3",
+      parent_folder: "lib",
       params: [
         Babel.Type.array(Babel.Type.int()),
         Babel.Type.option(Babel.Type.string()),
@@ -171,6 +176,7 @@ defmodule Babel.QueryTest do
         "-- It does not return any row"
       ],
       content: "INSERT INTO logs(message, meta) VALUES ($1, $2)",
+      parent_folder: "lib",
       params: [
         Babel.Type.string(),
         Babel.Type.option(Babel.Type.string())
@@ -189,10 +195,124 @@ defmodule Babel.QueryTest do
 
       code = Babel.Query.generate_code(query)
 
-    THEN the generated Elixir code should not define an struct module
+    THEN the generated Elixir code should not define a struct module
     but it should have a function with a guard clause and a fallback ArgumentError clause:
 
     #{code}
+    """
+    |> Calque.check()
+  end
+
+  test "from_sql_file returns {:ok, untyped_query} for a valid SQL file with leading comment" do
+    file = %FileHandling.SqlFile{
+      path: "lib/users/sql/get_by_id.sql",
+      name: "get_by_id",
+      content: """
+      -- get users by id
+      SELECT * FROM users WHERE id = $1
+      """
+    }
+
+    {:ok, untyped_query} = Query.from_sql_file(file)
+
+    """
+    GIVEN a %SqlFile{} with a nested path and a leading SQL comment:
+
+      #{inspect(file, pretty: true, limit: :infinity)}
+
+    WHEN calling:
+
+      {:ok, untyped_query} = Babel.Query.from_sql_file(file)
+
+    THEN the resulting UntypedQuery is:
+
+      #{inspect(untyped_query, pretty: true, limit: :infinity)}
+    """
+    |> Calque.check()
+  end
+
+  test "from_sql_file accepts whitespace before the leading comment" do
+    file = %FileHandling.SqlFile{
+      path: "lib/queries/whitespace_then_comment.sql",
+      name: "whitespace_then_comment",
+      content: """
+
+
+
+        -- actual comment
+        SELECT 1;
+      """
+    }
+
+    {:ok, untyped_query} = Query.from_sql_file(file)
+
+    """
+    GIVEN a %SqlFile{} where content starts with whitespace then a valid comment:
+
+      #{inspect(file, pretty: true, limit: :infinity)}
+
+    WHEN calling:
+
+      {:ok, untyped_query} = Babel.Query.from_sql_file(file)
+
+    THEN the resulting UntypedQuery is:
+
+      #{inspect(untyped_query, pretty: true, limit: :infinity)}
+    """
+    |> Calque.check()
+  end
+
+  test "from_sql_file collects consecutive leading comments but stops at SQL" do
+    file = %FileHandling.SqlFile{
+      path: "lib/queries/multi_comment.sql",
+      name: "multi_comment",
+      content: """
+      -- first
+      -- second
+      SELECT * FROM x;
+      -- ignored trailing comment
+      """
+    }
+
+    {:ok, untyped_query} = Query.from_sql_file(file)
+
+    """
+    GIVEN a %SqlFile{} with multiple leading comments:
+
+      #{inspect(file, pretty: true, limit: :infinity)}
+
+    WHEN calling:
+
+      {:ok, untyped_query} = Babel.Query.from_sql_file(file)
+
+    THEN the resulting UntypedQuery is:
+
+      #{inspect(untyped_query, pretty: true, limit: :infinity)}
+    """
+    |> Calque.check()
+  end
+
+  test "from_sql_file returns {:error, :empty_sql_file} for empty content" do
+    file = %FileHandling.SqlFile{
+      path: "lib/queries/empty.sql",
+      name: "empty",
+      content: ""
+    }
+
+    result = Query.from_sql_file(file)
+
+    """
+    GIVEN a %SqlFile{} with empty content:
+
+      #{inspect(file, pretty: true, limit: :infinity)}
+
+    WHEN calling:
+
+      result = Babel.Query.from_sql_file(file)
+
+    THEN the returned value is:
+
+      #{inspect(result)}
     """
     |> Calque.check()
   end

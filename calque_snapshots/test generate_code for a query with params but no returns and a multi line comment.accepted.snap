@@ -10,6 +10,7 @@ GIVEN a TypedQuery with parameters but no return fields and a multi line comment
   name: %Babel.ValueIdentifier{name: "log_event"},
   comment: ["-- This query logs an event", "-- It does not return any row"],
   content: "INSERT INTO logs(message, meta) VALUES ($1, $2)",
+  parent_folder: "lib",
   params: [:string, {:option, :string}],
   returns: []
 }
@@ -18,7 +19,7 @@ WHEN generating Elixir code with:
 
   code = Babel.Query.generate_code(query)
 
-THEN the generated Elixir code should not define an struct module
+THEN the generated Elixir code should not define a struct module
 but it should have a function with a guard clause and a fallback ArgumentError clause:
 
 @doc """

@@ -10,6 +10,7 @@ GIVEN a TypedQuery with no parameters:
   name: %Babel.ValueIdentifier{name: "get_all_users"},
   comment: [],
   content: "SELECT * FROM users",
+  parent_folder: "user",
   params: [],
   returns: [
     %Babel.Field{label: "id", type: :int},

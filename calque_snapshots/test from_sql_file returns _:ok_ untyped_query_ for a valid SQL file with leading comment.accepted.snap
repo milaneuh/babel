@@ -1,0 +1,26 @@
+---
+version: 1.3.1
+title: test from_sql_file returns {:ok, untyped_query} for a valid SQL file with leading comment
+---
+GIVEN a %SqlFile{} with a nested path and a leading SQL comment:
+
+  %Babel.FileHandling.SqlFile{
+  path: "lib/users/sql/get_by_id.sql",
+  name: "get_by_id",
+  content: "-- get users by id\nSELECT * FROM users WHERE id = $1\n"
+}
+
+WHEN calling:
+
+  {:ok, untyped_query} = Babel.Query.from_sql_file(file)
+
+THEN the resulting UntypedQuery is:
+
+  %Babel.Query.UntypedQuery{
+  file: "lib/users/sql/get_by_id.sql",
+  starting_line: 1,
+  name: %Babel.ValueIdentifier{name: "get_by_id"},
+  comment: ["get users by id"],
+  content: "-- get users by id\nSELECT * FROM users WHERE id = $1\n",
+  parent_folder: "users"
+}

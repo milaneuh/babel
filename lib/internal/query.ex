@@ -1,19 +1,6 @@
 defmodule Babel.Query.UntypedQuery do
-  @enforce_keys [:file, :starting_line, :name, :comment, :content]
-  defstruct [:file, :starting_line, :name, :comment, :content]
-
-  @type t :: %__MODULE__{
-          file: String.t(),
-          starting_line: non_neg_integer(),
-          name: Babel.ValueIdentifier.t(),
-          comment: [String.t()],
-          content: String.t()
-        }
-end
-
-defmodule Babel.Query.TypedQuery do
-  @enforce_keys [:file, :starting_line, :name, :comment, :content, :params, :returns]
-  defstruct [:file, :starting_line, :name, :comment, :content, :params, :returns]
+  @enforce_keys [:file, :starting_line, :name, :comment, :content, :parent_folder]
+  defstruct [:file, :starting_line, :name, :comment, :content, :parent_folder]
 
   @type t :: %__MODULE__{
           file: String.t(),
@@ -21,6 +8,30 @@ defmodule Babel.Query.TypedQuery do
           name: Babel.ValueIdentifier.t(),
           comment: [String.t()],
           content: String.t(),
+          parent_folder: String.t()
+        }
+end
+
+defmodule Babel.Query.TypedQuery do
+  @enforce_keys [
+    :file,
+    :starting_line,
+    :name,
+    :comment,
+    :content,
+    :parent_folder,
+    :params,
+    :returns
+  ]
+  defstruct [:file, :starting_line, :name, :comment, :content, :parent_folder, :params, :returns]
+
+  @type t :: %__MODULE__{
+          file: String.t(),
+          starting_line: non_neg_integer(),
+          name: Babel.ValueIdentifier.t(),
+          comment: [String.t()],
+          content: String.t(),
+          parent_folder: String.t(),
           params: [Babel.Type.t()],
           returns: [Babel.Field.t(Babel.Type.t())]
         }
@@ -30,6 +41,7 @@ defmodule Babel.Query do
   alias Babel.ValueIdentifier
   alias Babel.Query.{TypedQuery, UntypedQuery}
   alias Babel.Field
+  alias Babel.FileHandling.SqlFile
 
   @spec add_types(UntypedQuery.t(), [Babel.Type.t()], [Babel.Field.t(Babel.Type.t())]) ::
           TypedQuery.t()
@@ -40,11 +52,41 @@ defmodule Babel.Query do
       name: query.name,
       comment: query.comment,
       content: query.content,
+      parent_folder: query.parent_folder,
       params: params,
       returns: returns
     }
   end
 
+  @spec from_sql_file(SqlFile.t()) ::
+          {:ok, UntypedQuery.t()} | {:error, :empty_sql_file}
+  def from_sql_file(%SqlFile{} = file) do
+    %{name: name, path: path, content: content} = file
+
+    parent_folder = extract_parent_folder(path)
+    trimmed = String.trim(content)
+
+    cond do
+      trimmed == "" ->
+        {:error, :empty_sql_file}
+
+      true ->
+        {:ok, name} = ValueIdentifier.new(name)
+        comment = extract_comment(content)
+
+        {:ok,
+         %UntypedQuery{
+           file: path,
+           starting_line: 1,
+           name: name,
+           comment: comment,
+           content: content,
+           parent_folder: parent_folder
+         }}
+    end
+  end
+
+  @spec generate_code(TypedQuery.t()) :: String.t()
   def generate_code(%TypedQuery{} = query) do
     %TypedQuery{
       file: file,
@@ -103,7 +145,6 @@ defmodule Babel.Query do
       |> Enum.map(&String.replace(&1, "--", ""))
       |> Enum.join("\n  ")
 
-    # Only generate the row struct when there are return fields
     row_module_code =
       case returns do
         [] ->
@@ -122,7 +163,6 @@ defmodule Babel.Query do
           """
       end
 
-    # Return type: struct when there are returns, :ok when there are none
     result_typespec =
       case returns do
         [] -> ":ok"
@@ -172,5 +212,32 @@ defmodule Babel.Query do
     [row_module_code, "", function_code]
     |> Enum.reject(&(&1 == ""))
     |> Enum.join("\n")
+  end
+
+  defp extract_comment(query) when is_binary(query) do
+    do_extract_comment(query, [])
+  end
+
+  defp do_extract_comment(query, lines) do
+    case String.trim_leading(query) do
+      <<"--", rest::binary>> ->
+        case String.split(rest, "\n", parts: 2) do
+          [line, rest_after_line] ->
+            do_extract_comment(rest_after_line, [String.trim(line) | lines])
+
+          [last_line] ->
+            do_extract_comment("", [String.trim(last_line) | lines])
+        end
+
+      _other ->
+        Enum.reverse(lines)
+    end
+  end
+
+  defp extract_parent_folder(path) do
+    path
+    |> Path.dirname()
+    |> Path.split()
+    |> Enum.at(-2)
   end
 end

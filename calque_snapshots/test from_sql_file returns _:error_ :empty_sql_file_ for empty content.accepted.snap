@@ -1,0 +1,19 @@
+---
+version: 1.3.1
+title: test from_sql_file returns {:error, :empty_sql_file} for empty content
+---
+GIVEN a %SqlFile{} with empty content:
+
+  %Babel.FileHandling.SqlFile{
+  path: "lib/queries/empty.sql",
+  name: "empty",
+  content: ""
+}
+
+WHEN calling:
+
+  result = Babel.Query.from_sql_file(file)
+
+THEN the returned value is:
+
+  {:error, :empty_sql_file}
